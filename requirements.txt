@@ -1,0 +1,6 @@
+Sphinx==7.1.2,
+click,
+paver,
+sphinx-autobuild,
+PyYAML,
+plct-bulder-for-sphinx,
