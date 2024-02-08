@@ -67,7 +67,11 @@ def publish() -> None:
     config_dict = _get_source_and_output_dirs_or_print_error()
     if config_dict is None:
         return
-    shutil.copytree(os.path.join(config_dict["output_dir"], config_dict["builder"]), "docs")
+    if config_dict["builder"] == "plct_builder":
+        static_website_root = os.path.join(config_dict["output_dir"], "plct_builder", "static_website")
+    else:
+        static_website_root = os.path.join(config_dict["output_dir"], config_dict["builder"])
+    shutil.copytree(static_website_root, "docs")
 
 
 @main.command()

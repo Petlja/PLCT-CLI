@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "plct-cli"
-version = "0.0.1"
+version = "0.0.2"
 description = "Command line interface for working with Sphinx projects."
 authors = ["Petlja <loop@petlja.com>"]
 readme = "README.md"

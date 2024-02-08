@@ -14,7 +14,7 @@ This Command-Line Interface (CLI) app, named PLCT (Petlja Learning Content Tools
 
 ### `build`
 
-Generate learning content using Sphinx-build.
+Generate learning content using `sphinx-build`. You have the option to pass specific options to Sphinx using the `-so` flag. If no options are passed, they will be deduced or read from the `plct_config` file.
 
 ```bash
 plct build [-so <sphinx-options>] [-sf <sphinx-files>]
@@ -25,7 +25,7 @@ plct build [-so <sphinx-options>] [-sf <sphinx-files>]
 
 ### `preview`
 
-Preview learning content using Sphinx-autobuild.
+Starts a local server using `sphinx-autobuild`. The root of this server corresponds to the root of the generated content. This allows you to edit files in the source directory and see the changes reflected in real-time on the server, as it will automatically refresh the content.
 
 ```bash
 plct preview [-so <sphinx-options>]
@@ -35,7 +35,7 @@ plct preview [-so <sphinx-options>]
 
 ### `publish`
 
-Publish learning content.
+Publish learning content. Provides an easy way to create doc folder that can be used as the root for git hub pages.
 
 ```bash
 plct publish
@@ -51,7 +51,7 @@ plct clean
 
 ### `get_markdown`
 
-Generate markdown files from the source directory.
+Command zips all markdown files from the source directory.
 
 ```bash
 plct get_markdown
@@ -59,57 +59,7 @@ plct get_markdown
 
 ## Configuration
 
-The app tries to determine the command arguments (source and output directories) of the sphinx command based on the project file structure. You can also specify these configurations `plct config.yaml`.
-
-## Usage
-
-For detailed information about each command, use the `--help` option:
-
-```bash
-plct [COMMAND] --help
-```
-
-## Examples
-
-### Build Command
-
-```bash
-plct build
-```
-
-This command generates learning content using Sphinx with additional options and specific filenames.
-
-### Preview Command
-
-```bash
-plct preview
-```
-
-This command previews learning content with additional Sphinx-autobuild options.
-
-### Publish Command
-
-```bash
-plct publish
-```
-
-This command publishes learning content, copying it to the "docs" directory.
-
-### Clean Command
-
-```bash
-plct clean
-```
-
-This command cleans the generated output directory.
-
-### Get Markdown Command
-
-```bash
-plct get_markdown
-```
-
-This command zips all markdown files from the source directory.
+The app tries to determine the command arguments (source and output directories) of the sphinx command based on the project file structure. You can also specify these configurations `plct_config.yaml`.
 
 ## License
 
