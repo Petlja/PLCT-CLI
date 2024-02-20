@@ -1,13 +1,14 @@
 
 from typing import Union
+from importlib import import_module
 import click
 import shutil
-import yaml
 import os
 
 from paver.easy import sh
 
-DEFAULT_BUILDER = "html"
+from .project_config import ProjectConfig, get_project_config, ProjectConfigError
+
 EXTENSIONS = (".rst", ".md", ".txt")
 
 @click.group()
@@ -24,12 +25,12 @@ def main():
 @click.option("-so", "--sphinx-options", default=[], multiple=True, help="Sphinx options")
 @click.option("-sf", "--sphinx-files", default=[],  multiple=True, help="Sphinx-build filenames")
 def build(sphinx_options, sphinx_files) -> None:
-    config_dict = _get_source_and_output_dirs_or_print_error()
-    if config_dict is None:
+    project_config = _get_source_and_output_dirs_or_print_error()
+    if project_config is None:
         return
-    source_dir = config_dict["source_dir"]
-    output_dir = config_dict["output_dir"]
-    builder = config_dict["builder"]
+    source_dir = project_config.source_dir
+    output_dir = project_config.output_dir
+    builder = project_config.builder
     options = " ".join(sphinx_options)
     files = " ".join(sphinx_files)
     sh(f'sphinx-build -M {builder} {options} "{source_dir}" "{output_dir}" {files}')
@@ -38,12 +39,12 @@ def build(sphinx_options, sphinx_files) -> None:
 @main.command()
 @click.option("-so", "--sphinx-options", default=[], multiple=True, help="Sphinx options")
 def preview(sphinx_options) -> None:
-    config_dict = _get_source_and_output_dirs_or_print_error()
-    if config_dict is None:
+    project_config = _get_source_and_output_dirs_or_print_error()
+    if project_config is None:
         return
-    source_dir = config_dict["source_dir"]
-    output_dir = config_dict["output_dir"]
-    builder = config_dict["builder"]
+    source_dir = project_config.source_dir
+    output_dir = project_config.output_dir
+    builder = project_config.builder
 
     options = " ".join(sphinx_options)
     options += f" -b {builder}"
@@ -56,39 +57,36 @@ def preview(sphinx_options) -> None:
     else:
         #hacking since sphinx autobuild does not support difrent arguments for build and serve
         output_dir = os.path.join(output_dir, builder, "static_website")
-        
 
     sh(f'sphinx-autobuild "{source_dir}" "{output_dir}" {options} ')
 
-
-
 @main.command()
 def publish() -> None:
-    config_dict = _get_source_and_output_dirs_or_print_error()
-    if config_dict is None:
+    project_config = _get_source_and_output_dirs_or_print_error()
+    if project_config is None:
         return
-    if config_dict["builder"] == "plct_builder":
-        static_website_root = os.path.join(config_dict["output_dir"], "plct_builder", "static_website")
+    if project_config.builder == "plct_builder":
+        static_website_root = os.path.join(project_config.output_dir, "plct_builder", "static_website")
     else:
-        static_website_root = os.path.join(config_dict["output_dir"], config_dict["builder"])
+        static_website_root = os.path.join(project_config.output_dir, project_config.builder)
     shutil.copytree(static_website_root, "docs")
 
 
 @main.command()
 def clean() -> None:
-    config_dict = _get_source_and_output_dirs_or_print_error()
-    if config_dict is None:
+    project_config = _get_source_and_output_dirs_or_print_error()
+    if project_config is None:
         return
-    shutil.rmtree(config_dict["output_dir"], ignore_errors=True)
+    shutil.rmtree(project_config.output_dir, ignore_errors=True)
 
 @main.command()
 def get_markdown() -> None:
     project_dir = os.getcwd()
-    config_dict = _get_source_and_output_dirs_or_print_error()
-    if config_dict is None:
+    project_config = _get_source_and_output_dirs_or_print_error()
+    if project_config is None:
         return
-    build_dir_source_copy_path = os.path.join(config_dict["output_dir"], "_sources")
-    source_dir = build_dir_source_copy_path if os.path.isdir(build_dir_source_copy_path) else config_dict["source_dir"]
+    build_dir_source_copy_path = os.path.join(project_config.output_dir, "_sources")
+    source_dir = build_dir_source_copy_path if os.path.isdir(build_dir_source_copy_path) else project_config.source_dir
     package_dir = os.path.join(project_dir, "markdown_files")
     if not os.path.isdir(package_dir):
         os.makedirs(package_dir)
@@ -101,54 +99,20 @@ def get_markdown() -> None:
     shutil.make_archive("package", "zip", package_dir)
     shutil.rmtree(package_dir, ignore_errors=True)
 
-
-def _get_config_from_yaml() -> Union[dict[str, str], None]:
-    if os.path.isfile("plct_config.yaml"):
-        with open("plct_config.yaml") as f:
-            config = yaml.safe_load(f)
-        return config
-    return None
-
-
-def _get_config_from_sphinx_project() -> tuple[str, str, str]:
-    project_dir = os.getcwd()
-    source_dir = os.path.join(project_dir, "source")
-    build_dir = os.path.join(project_dir, "build")
-    if os.path.isdir(source_dir):
-        _ensure_dir(build_dir)
-        return source_dir, build_dir, DEFAULT_BUILDER
-    else:
-        source_dir = os.path.join(project_dir)
-        build_dir = os.path.join(project_dir, "_build")
-        if os.path.isfile(os.path.join(source_dir, "conf.py")):
-            _ensure_dir(build_dir)
-            return source_dir, build_dir, DEFAULT_BUILDER
-        else:
-            raise ValueError(
-                "Unknown Sphinx project directory structure. Please specify source and build directories in plct_config.yaml")
-
-
-def _get_source_and_output_dirs() -> dict[str, str]:
-    config = _get_config_from_yaml()
-    if config:
-        source_dir = config.get("source_dir")
-        output_dir = config.get("output_dir")
-        builder = config.get("builder")
-        if source_dir is None or output_dir is None or builder is None:
-            raise ValueError("Invalid configuration file.")
-    else:
-        source_dir, output_dir, builder = _get_config_from_sphinx_project()
-    return {'source_dir' : source_dir, 'output_dir' : output_dir, 'builder' : builder}
-
-
-def _get_source_and_output_dirs_or_print_error() -> Union[dict[str, str], None]:
+def load_extension_commands():
     try:
-        config_dict = _get_source_and_output_dirs()
-    except ValueError as error:
+        extension = import_module('plct_server')
+        extension.register_extension_command(main)
+    except ImportError:
+        pass
+
+load_extension_commands()
+
+def _get_source_and_output_dirs_or_print_error() -> Union[ProjectConfig, None]:
+    project_dir = os.getcwd()
+    try:
+        project_config = get_project_config(project_dir)
+    except ProjectConfigError as error:
         print(error)
         return None
-    return config_dict
-
-def _ensure_dir(path: str) -> None:
-    if not os.path.isdir(path):
-        os.makedirs(path)
+    return project_config
