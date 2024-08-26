@@ -69,7 +69,7 @@ def publish() -> None:
         static_website_root = os.path.join(project_config.output_dir, "plct_builder", "static_website")
     else:
         static_website_root = os.path.join(project_config.output_dir, project_config.builder)
-    shutil.copytree(static_website_root, "docs")
+    shutil.copytree(static_website_root, "docs", dirs_exist_ok=True)
 
 
 @main.command()
