@@ -70,6 +70,9 @@ def publish() -> None:
     else:
         static_website_root = os.path.join(project_config.output_dir, project_config.builder)
     shutil.copytree(static_website_root, "docs", dirs_exist_ok=True)
+    if not os.path.isfile("docs/.nojekyll"):
+        with open("docs/.nojekyll", "w") as nojekyll_file:
+            nojekyll_file.write("")
 
 
 @main.command()

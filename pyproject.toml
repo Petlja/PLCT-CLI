@@ -1,10 +1,9 @@
 [tool.poetry]
 name = "plct-cli"
-version = "0.0.4"
+version = "0.0.5"
 description = "Command line interface for working with Sphinx projects."
 authors = ["Petlja <loop@petlja.com>"]
 readme = "README.md"
-requires-python = "^3.9"
 
 [tool.poetry.dependencies]
 Sphinx = "7.1.2"
